@@ -1,0 +1,21 @@
+{
+  "name": "glami/php-test-task",
+  "description": "",
+  "minimum-stability": "stable",
+  "license": "proprietary",
+  "authors": [
+    {
+      "name": "GLAMI Developers",
+      "email": "devel@glami.cz"
+    }
+  ],
+  "require": {
+    "php": ">= 8.0",
+    "ext-sqlite3": "*"
+  },
+  "autoload": {
+    "psr-4": {
+      "App\\": "src/"
+    }
+  }
+}
