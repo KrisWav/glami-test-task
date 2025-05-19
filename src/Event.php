@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace App;
 
@@ -13,31 +13,43 @@ class Event
         $this->db = $db;
     }
 
-    public function insert(string $type)
+    public function insert(string $type): void
     {
-        $created = time();
-        $query = 'INSERT INTO `Event` (`type`, `created`) 
-                  VALUES("' . $type . '", "' . date('Y-m-d H:i:s', $created) . '")';
-        return $this->db->exec($query);
+        $created = date('Y-m-d H:i:s');
+		$query = 'INSERT INTO `Event` (`type`, `created`) VALUES (:type, :created)';
+		$prepared = $this->db->prepare($query);
+		$prepared->bindValue(':type', $type);
+		$prepared->bindValue(':created', $created);
+
+		$prepared->execute();
     }
 
-    public function getEventsCount(string $dateFrom, string $dateTo)
+    public function getEventsCount(string $dateFrom, string $dateTo): int
     {
-        $query = 'SELECT COUNT(*) FROM `Event` WHERE DATE(`created`) BETWEEN :from AND :to';
+        $query = 'SELECT COUNT(*) as `event_count` FROM `Event`
+                 	WHERE DATE(`created`) BETWEEN :from AND :to';
         $prepared = $this->db->prepare($query);
-        $prepared->bindParam(':from', $dateFrom);
-        $prepared->bindParam(':to', $dateTo);
-        return $this->db->querySingle($prepared->getSQL(true));
+        $prepared->bindValue(':from', $dateFrom);
+        $prepared->bindValue(':to', $dateTo);
+		$dbResult = $prepared->execute();
+		$row = $dbResult->fetchArray(SQLITE3_ASSOC);
+
+		return (int) $row['event_count'];
     }
 
-    public function getTypesStats()
+	/**
+	 * @return array<string, int>
+	 */
+	public function getTypesStats(): array
     {
-        $query = 'SELECT `type`, COUNT() as `cnt`, `created` FROM `Event` GROUP BY `type`';
+        $query = 'SELECT `type`, COUNT(`type`) as `type_count` FROM `Event` GROUP BY `type`';
         $results = [];
         $dbResults = $this->db->query($query);
+
         while ($row = $dbResults->fetchArray(SQLITE3_ASSOC)) {
-            $results[$row['type']] = $row['cnt'];
+            $results[$row['type']] = (int) $row['type_count'];
         }
+
         return $results;
     }
 }
